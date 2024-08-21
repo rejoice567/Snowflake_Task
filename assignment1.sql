@@ -43,3 +43,7 @@ INSERT INTO emp_basic VALUES
    SELECT email FROM emp_basic WHERE email LIKE '%.uk';
 
    SELECT first_name, last_name, DATEADD('day',90,start_date) FROM emp_basic WHERE start_date <= '2017-01-01';
+
+
+
+
