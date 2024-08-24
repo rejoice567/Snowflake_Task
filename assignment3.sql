@@ -1,212 +1,51 @@
-CREATE OR REPLACE DATABASE mydatabase;
+create or replace database MDB;
+
+use schema MDB.public;
 
 
-USE SCHEMA mydatabase.public;
-CREATE OR REPLACE TABLE raw_source (
-  SRC VARIANT);
+CREATE OR REPLACE TEMPORARY TABLE home_sales (
+  city STRING,
+  zip STRING,
+  state STRING,
+  type STRING DEFAULT 'Residential',
+  sale_date timestamp_ntz,
+  price STRING
+  );
 
 
-CREATE OR REPLACE WAREHOUSE mywarehouse WITH
-  WAREHOUSE_SIZE='X-SMALL'
-  AUTO_SUSPEND = 120
-  AUTO_RESUME = TRUE
-  INITIALLY_SUSPENDED=TRUE;
-
-USE WAREHOUSE mywarehouse;
-
-CREATE OR REPLACE STAGE my_stage
-  URL = 's3://snowflake-docs/tutorials/json';
-
------copy into the stage
-  COPY INTO raw_source
-  FROM @my_stage/server/2.6/2016/07/15/15
-  FILE_FORMAT = (TYPE = JSON);
+  create or replace warehouse mywarehouse with
+  warehouse_size='X-SMALL'
+  auto_suspend = 120
+  auto_resume = true
+  initially_suspended=true;
 
 
-  SELECT * FROM raw_source;
+  use warehouse mywarehouse;
+
+  CREATE OR REPLACE FILE FORMAT sf_tut_json_format
+  TYPE = JSON;
 
 
-  SELECT src:device_type
-  FROM raw_source;
+  CREATE OR REPLACE TEMPORARY STAGE sf_tut_stage
+ FILE_FORMAT = sf_tut_json_format;
 
 
-  SELECT src:device_type::string AS device_type
-  FROM raw_source;
+ PUT file://C:\temp\load\sales.json @sf_tut_stage AUTO_COMPRESS=TRUE;
 
-  
-SELECT
-  value:f::number
-  FROM
-    raw_source
-  , LATERAL FLATTEN( INPUT => SRC:events );
+ PUT file:///workspaces/Snowflake_Task/sales.json @sf_tut_stage AUTO_COMPRESS=TRUE;
 
 
-  SELECT src:device_type::string,
-    src:version::String,
-    VALUE
-FROM
-    raw_source,
-    LATERAL FLATTEN( INPUT => SRC:events );
-
-    CREATE OR REPLACE TABLE flattened_source AS
-  SELECT
-    src:device_type::string AS device_type,
-    src:version::string     AS version,
-    VALUE                   AS src
-  FROM
-    raw_source,
-    LATERAL FLATTEN( INPUT => SRC:events );
+ COPY INTO home_sales(city, state, zip, sale_date, price)
+   FROM (SELECT SUBSTR($1:location.state_city,4),
+                SUBSTR($1:location.state_city,1,2),
+                $1:location.zip,
+                to_timestamp_ntz($1:sale_date),
+                $1:price
+         FROM @sf_tut_stage/sales.json.gz t)
+   ON_ERROR = 'continue';
 
 
-    create or replace table events as
-  select
-    src:device_type::string                             as device_type
-  , src:version::string                                 as version
-  , value:f::number                                     as f
-  , value:rv::variant                                   as rv
-  , value:t::number                                     as t
-  , value:v.ACHZ::number                                as achz
-  , value:v.ACV::number                                 as acv
-  , value:v.DCA::number                                 as dca
-  , value:v.DCV::number                                 as dcv
-  , value:v.ENJR::number                                as enjr
-  , value:v.ERRS::number                                as errs
-  , value:v.MXEC::number                                as mxec
-  , value:v.TMPI::number                                as tmpi
-  , value:vd::number                                    as vd
-  , value:z::number                                     as z
-  from
-    raw_source
-  , lateral flatten ( input => SRC:events );
+   SELECT * from home_sales;
 
 
-  ALTER TABLE events ADD CONSTRAINT pk_DeviceType PRIMARY KEY (device_type, rv);
-
-
-insert into raw_source
-  select
-  PARSE_JSON ('{
-    "device_type": "cell_phone",
-    "events": [
-      {
-        "f": 79,
-        "rv": "786954.67,492.68,3577.48,40.11,343.00,345.8,0.22,8765.22",
-        "t": 5769784730576,
-        "v": {
-          "ACHZ": 75846,
-          "ACV": 098355,
-          "DCA": 789,
-          "DCV": 62287,
-          "ENJR": 2234,
-          "ERRS": 578,
-          "MXEC": 999,
-          "TMPI": 9
-        },
-        "vd": 54,
-        "z": 1437644222811
-      }
-    ],
-    "version": 3.2
-  }');
-
-
-  insert into events
-select
-      src:device_type::string
-    , src:version::string
-    , value:f::number
-    , value:rv::variant
-    , value:t::number
-    , value:v.ACHZ::number
-    , value:v.ACV::number
-    , value:v.DCA::number
-    , value:v.DCV::number
-    , value:v.ENJR::number
-    , value:v.ERRS::number
-    , value:v.MXEC::number
-    , value:v.TMPI::number
-    , value:vd::number
-    , value:z::number
-    from
-      raw_source
-    , lateral flatten( input => src:events )
-    where not exists
-    (select 'x'
-      from events
-      where events.device_type = src:device_type
-      and events.rv = value:rv);
-
-
-      select * from EVENTS;
-
-
-      insert into raw_source
-  select
-  parse_json ('{
-    "device_type": "web_browser",
-    "events": [
-      {
-        "f": 79,
-        "rv": "122375.99,744.89,386.99,12.45,78.08,43.7,9.22,8765.43",
-        "t": 5769784730576,
-        "v": {
-          "ACHZ": 768436,
-          "ACV": 9475,
-          "DCA": 94835,
-          "DCV": 88845,
-          "ENJR": 8754,
-          "ERRS": 567,
-          "MXEC": 823,
-          "TMPI": 0
-        },
-        "vd": 55,
-        "z": 8745598047355
-      }
-    ],
-    "version": 8.7
-  }');
-
-
-  insert into events
-select
-      src:device_type::string
-    , src:version::string
-    , value:f::number
-    , value:rv::variant
-    , value:t::number
-    , value:v.ACHZ::number
-    , value:v.ACV::number
-    , value:v.DCA::number
-    , value:v.DCV::number
-    , value:v.ENJR::number
-    , value:v.ERRS::number
-    , value:v.MXEC::number
-    , value:v.TMPI::number
-    , value:vd::number
-    , value:z::number
-    from
-      raw_source
-    , lateral flatten( input => src:events )
-    where not exists
-    (select 'x'
-      from events
-      where events.device_type = src:device_type
-      and events.version = src:version
-      and events.f = value:f
-      and events.rv = value:rv
-      and events.t = value:t
-      and events.achz = value:v.ACHZ
-      and events.acv = value:v.ACV
-      and events.dca = value:v.DCA
-      and events.dcv = value:v.DCV
-      and events.enjr = value:v.ENJR
-      and events.errs = value:v.ERRS
-      and events.mxec = value:v.MXEC
-      and events.tmpi = value:v.TMPI
-      and events.vd = value:vd
-      and events.z = value:z);
-
-
-
-
-select * from EVENTS;      
+   REMOVE @sf_tut_stage/sales.json.gz;
