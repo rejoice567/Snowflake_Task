@@ -10,11 +10,13 @@ In conclusion, the summary effectively conveys the power and versatility of the 
 
 ### Example 1
 
+```
 select o_custkey
 
 from orders
 
 group by o_custkey
+```
 
 ![alt text](image-1.png)
 
@@ -27,7 +29,7 @@ functions sum() and count(), which will be applied to all the rows within each g
 
 ### Example 2
  
-
+```
 select o_custkey,
 
 sum(o_totalprice) as total_sales,
@@ -37,6 +39,7 @@ count(*) as number_of_orders
  from orders
  
  group by o_custkey;
+ ```
 
  ![alt text](image-2.png)
 
@@ -44,7 +47,7 @@ count(*) as number_of_orders
  The query calculates the total sales and number of orders for each customer. For example, customer 77194 placed 3 orders totaling over $693,070. However, the query is still returning too many rows.
 
 ### Example 3
-
+```
 select o_custkey,
 
 sum(o_totalprice) as total_sales,
@@ -58,6 +61,7 @@ group by o_custkey
 having sum(o_totalprice) >= 1800000
 
  or count(*) >= 8;
+ ```
 
  To find top customers, filter out rows with total sales less than $1,800,000 or fewer than 8 orders. Use a having clause to filter grouped data, not a where clause.
 
@@ -67,6 +71,7 @@ having sum(o_totalprice) >= 1800000
  Aggregate functions compute values across entire groups of data. For instance, they can count rows, sum numeric fields, or calculate averages. If your query doesn't use a GROUP BY clause, it still groups the entire result set. Here's an example showing various aggregate functions applied to all rows in the Orders table.
 
  ### Example 4
+ ```
  select count(*) as num_orders,
 
  min(o_totalprice) as min_price,
@@ -76,7 +81,7 @@ having sum(o_totalprice) >= 1800000
  avg(o_totalprice) as avg_price
 
  from orders;
-
+```
 
  ![alt text](image-3.png)
 
@@ -86,6 +91,7 @@ extend this query to show the same calculations for each year rather than across
 entire table:
  
  ### Example 5
+ ```
 select date_part(year, o_orderdate) as order_year,
 
  count(*) as num_orders,
@@ -99,6 +105,7 @@ select date_part(year, o_orderdate) as order_year,
  from orders
 
  group by date_part(year, o_orderdate);
+ ```
 
  ![alt text](image-4.png)
 
@@ -109,6 +116,8 @@ select date_part(year, o_orderdate) as order_year,
 count(DISTINCT column_name) counts the distinct values in a column.
 
 ### Example 6
+
+```
  select count(*) as total_orders,
 
  count(distinct o_custkey) as num_customers,
@@ -116,6 +125,7 @@ count(DISTINCT column_name) counts the distinct values in a column.
  count(distinct date_part(year, o_orderdate)) as num_years
 
  from orders;
+ ```
 
  ![alt text](image-5.png)
 
@@ -123,7 +133,7 @@ count(DISTINCT column_name) counts the distinct values in a column.
 count_if(condition) counts rows where a given condition is true.
 
 ### Example 7
-
+```
 select 
 
 count_if(1992 = date_part(year, o_orderdate)) num_1992,
@@ -131,6 +141,8 @@ count_if(1992 = date_part(year, o_orderdate)) num_1992,
 count_if(1995 = date_part(year, o_orderdate)) num_1995
 
 from orders
+
+```
 
  ![alt text](image-6.png)
 
@@ -141,6 +153,7 @@ from orders
  max(), min(), avg(), and sum() are aggregate functions used to find the maximum, minimum, average, and sum of values within a group, respectively.
 
  ### Example 8
+ ```
 
  select date_part(year, o_orderdate) as year,
 
@@ -155,15 +168,18 @@ from orders
  from orders
 
  group by date_part(year, o_orderdate);
+ ```
 
  ![alt text](image-7.png)
+
 ### Listagg() Function
 
 listagg() is an aggregate function that creates a delimited list of values from a column.
 
  ### Example 9
+ ```
 
- PUBLIC>select r.r_name,
+ select r.r_name,
 
  listagg(n.n_name,',') 
 
@@ -174,6 +190,7 @@ listagg() is an aggregate function that creates a delimited list of values from 
  on r.r_regionkey = n.n_regionkey
 
  group by r.r_name; 
+ ```
 
  ![alt text](image-8.png)
 
@@ -183,6 +200,8 @@ The listagg() function creates a comma-delimited list of Nation names for each R
 ### Multicolumn grouping.
 You can group data on multiple columns. This example counts customers by country and market segment for customers in the Amer
 ### Example 10
+
+```
 select n.n_name, c.c_mktsegment, count(*)
 
 from customer c inner join nation n
@@ -194,6 +213,7 @@ where n.n_regionkey = 1
 group by n.n_name, c.c_mktsegment
 
 order by 1,2
+```
 
 ![alt text](image-9.png)
 
@@ -204,6 +224,7 @@ You can use multiple expressions in your GROUP BY clause to create more complex 
 
 ### Example 11
 
+```
 select date_part(year, o.o_orderdate) as year,
 
 datediff(month, o.o_orderdate,
@@ -218,6 +239,7 @@ where o.o_orderdate >= '01-JAN-1997'::date
 group by date_part(year, o.o_orderdate),
 datediff(month, o.o_orderdate, l.l_shipdate)
 order by 1,2;
+```
 
 ![alt text](image-10.png)
 
@@ -228,6 +250,7 @@ order by 1,2;
 Snowflake's GROUP BY ALL option is a shortcut for grouping data using expressions.
 
 ### Example 12
+```
 
  select date_part(year, o.o_orderdate) as year,
  datediff(month, o.o_orderdate,
@@ -238,7 +261,7 @@ Snowflake's GROUP BY ALL option is a shortcut for grouping data using expression
  where o.o_orderdate >= '01-JAN-1997'::date
  group by all
  order by 1,2;
-
+```
 ![alt text](image-11.png)
 
 ### Grouping rollup
@@ -248,12 +271,14 @@ want to know the total counts for each country across all market segments. This 
 be accomplished using the rollup option of the group by clause:
 
 ### Example 13
+```
 select n.n_name, c.c_mktsegment, count(*)
  from customer c inner join nation n
  on c.c_nationkey = n.n_nationkey
  where n.n_regionkey = 1
  group by rollup(n.n_name, c.c_mktsegment)
  order by 1,2;
+ ```
 
  ![alt text](image-12.png)
 
@@ -267,11 +292,13 @@ To find customers with total sales over $700,000 in 1998, first group data by cu
 
 ### Example 14
 
+ ```
  select o_custkey, sum(o_totalprice)
  from orders
  where 1998 = date_part(year, o_orderdate)
  group by o_custkey
  order by 1;
+ ```
 
 ![alt text](image-13.png)
 
