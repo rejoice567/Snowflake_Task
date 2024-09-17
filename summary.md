@@ -10,7 +10,7 @@ In conclusion, the summary effectively conveys the power and versatility of the 
 
 ### Example 1
 
-```
+```sql
 select o_custkey
 
 from orders
@@ -29,7 +29,7 @@ functions sum() and count(), which will be applied to all the rows within each g
 
 ### Example 2
  
-```
+```sql
 select o_custkey,
 
 sum(o_totalprice) as total_sales,
@@ -47,7 +47,7 @@ count(*) as number_of_orders
  The query calculates the total sales and number of orders for each customer. For example, customer 77194 placed 3 orders totaling over $693,070. However, the query is still returning too many rows.
 
 ### Example 3
-```
+```sql
 select o_custkey,
 
 sum(o_totalprice) as total_sales,
@@ -71,7 +71,7 @@ having sum(o_totalprice) >= 1800000
  Aggregate functions compute values across entire groups of data. For instance, they can count rows, sum numeric fields, or calculate averages. If your query doesn't use a GROUP BY clause, it still groups the entire result set. Here's an example showing various aggregate functions applied to all rows in the Orders table.
 
  ### Example 4
- ```
+ ```sql
  select count(*) as num_orders,
 
  min(o_totalprice) as min_price,
@@ -91,7 +91,7 @@ extend this query to show the same calculations for each year rather than across
 entire table:
  
  ### Example 5
- ```
+ ```sql
 select date_part(year, o_orderdate) as order_year,
 
  count(*) as num_orders,
@@ -117,7 +117,7 @@ count(DISTINCT column_name) counts the distinct values in a column.
 
 ### Example 6
 
-```
+```sql
  select count(*) as total_orders,
 
  count(distinct o_custkey) as num_customers,
@@ -133,7 +133,7 @@ count(DISTINCT column_name) counts the distinct values in a column.
 count_if(condition) counts rows where a given condition is true.
 
 ### Example 7
-```
+```sql
 select 
 
 count_if(1992 = date_part(year, o_orderdate)) num_1992,
@@ -153,7 +153,7 @@ from orders
  max(), min(), avg(), and sum() are aggregate functions used to find the maximum, minimum, average, and sum of values within a group, respectively.
 
  ### Example 8
- ```
+ ```sql
 
  select date_part(year, o_orderdate) as year,
 
@@ -177,7 +177,7 @@ from orders
 listagg() is an aggregate function that creates a delimited list of values from a column.
 
  ### Example 9
- ```
+ ```sql
 
  select r.r_name,
 
@@ -292,7 +292,7 @@ To find customers with total sales over $700,000 in 1998, first group data by cu
 
 ### Example 14
 
- ```
+ ```sql
  select o_custkey, sum(o_totalprice)
  from orders
  where 1998 = date_part(year, o_orderdate)
